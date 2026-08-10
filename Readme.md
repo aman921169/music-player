@@ -14,6 +14,7 @@ audio playback, and event-driven programming in Python.
 - Resume music
 - Stop music
 - Volume control
+- Playlist option
 - CustomTkinter GUI
 
 ## Technologies Used
@@ -22,10 +23,7 @@ audio playback, and event-driven programming in Python.
 - CustomTkinter
 - pygame-ce
 - Git & GitHub
-- Python 3
 - CustomTkinter
-- pygame-ce
-- Git & GitHub
 
 ## 📂 Project Structure
 

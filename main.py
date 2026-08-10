@@ -8,7 +8,10 @@ pygame.mixer.init()
 #here we are creating the main window for the music player
 app = ctk.CTk()
 app.title("Music Player")
-app.size = (500, 400)
+app.geometry = (500, 400)
+
+playlist = []
+current_song = 0
 
 #this function allows the user to select a music file from their computer
 def select_song():
@@ -35,6 +38,25 @@ def stop_song():
 def change_control(value):
     pygame.mixer.music.set_volume(float(value))
 
+def select_songs():
+    files = filedialog.askopenfilenames(
+        filetypes=[("Audio files", "*.mp3 *.wav *.ogg")]
+    )
+
+    for file in files:
+        playlist.append(file)
+        song_button = ctk.CTkButton(
+            playlist_frame,
+            text=file.split("/")[-1],
+            command=lambda song=file: play_selected_song(song)
+        )
+        song_button.pack(pady=5)
+    
+def play_selected_song(file):
+    pygame.mixer.music.load(file)
+    pygame.mixer.music.play()
+    song_label.configure(text=file.split("/")[-1])  # Update the label with the selected song name
+
 song_label = ctk.CTkLabel(
     app,
     text="no song selected",
@@ -42,10 +64,17 @@ song_label = ctk.CTkLabel(
 )
 song_label.pack(pady=40)
 
+playlist_frame = ctk.CTkFrame(
+    app,
+    width = 400,
+    height = 150
+    )
+playlist_frame.pack(pady=10)
+
 select_button = ctk.CTkButton(
     app,
-    text="Select Song",
-    command=select_song
+    text="add Songs",
+    command=select_songs
 )
 select_button.pack(pady=10)
 
@@ -85,5 +114,6 @@ volume_slider = ctk.CTkSlider(
 )
 volume_slider.set(0.5)
 volume_slider.pack(pady=10)
+
 
 app.mainloop()
