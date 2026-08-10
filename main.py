@@ -23,6 +23,17 @@ def select_song():
 def play_song():
     pygame.mixer.music.play()
 
+def pause_song():
+    pygame.mixer.music.pause()
+
+def resume_song():
+    pygame.mixer.music.unpause()
+
+def stop_song():
+    pygame.mixer.music.stop()
+
+def change_control(value):
+    pygame.mixer.music.set_volume(float(value))
 
 song_label = ctk.CTkLabel(
     app,
@@ -44,5 +55,35 @@ play_button = ctk.CTkButton(
     command=play_song
 )
 play_button.pack(pady=10)
+
+resume_button = ctk.CTkButton(
+    app,
+    text="⏯ Resume",
+    command=resume_song
+)
+resume_button.pack(pady=10)
+
+pause_button = ctk.CTkButton(
+    app,
+    text="⏸ Pause",
+    command=pause_song
+)
+pause_button.pack(pady=10)
+
+stop_button = ctk.CTkButton(
+    app,
+    text="⏹ Stop",
+    command=stop_song
+)
+stop_button.pack(pady=10)
+
+volume_slider = ctk.CTkSlider(
+    app,
+    from_=0,
+    to=1,
+    command=change_control
+)
+volume_slider.set(0.5)
+volume_slider.pack(pady=10)
 
 app.mainloop()
