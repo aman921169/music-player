@@ -5,13 +5,18 @@ from tkinter import filedialog
 
 pygame.mixer.init()
 
+#here we are creating a custom event for when the music ends
+MUSIC_END = pygame.USEREVENT + 1
+pygame.mixer.music.set_endevent(MUSIC_END)
+
 #here we are creating the main window for the music player
 app = ctk.CTk()
 app.title("Music Player")
-app.geometry = (500, 400)
+app.geometry("500x400")
 
 playlist = []
 current_song = 0
+current_duration = 0
 
 #this function allows the user to select a music file from their computer
 def select_song():
@@ -51,11 +56,99 @@ def select_songs():
             command=lambda song=file: play_selected_song(song)
         )
         song_button.pack(pady=5)
+
+def format_duration(seconds):
+    minutes = int(seconds // 60)
+    seconds = int(seconds % 60)
+    return f"{minutes}:{seconds:02d}"
     
 def play_selected_song(file):
+    global current_song
+    global current_duration
+    current_song = playlist.index(file)
+
     pygame.mixer.music.load(file)
     pygame.mixer.music.play()
+
+    current_duration = get_song_length(file)
+    duration_label.configure(
+        text=f"0:00 / {format_duration(duration)}"
+    )
+
     song_label.configure(text=file.split("/")[-1])  # Update the label with the selected song name
+
+def next_song():
+    global current_song
+    global current_duration
+    if not playlist:
+        return  # No songs in the playlist
+    if current_song < len(playlist) - 1:
+        current_song += 1
+
+        file = playlist[current_song]
+
+        pygame.mixer.music.load(file)
+        pygame.mixer.music.play()
+
+        current_duration = get_song_length(file)
+
+        progress_slider.set(0)
+
+        duration_label.configure(
+            text=f"0:00 / {format_duration(current_duration)}"
+        )
+
+        song_label.configure(text=file.split("/")[-1])  # Update the label with the next song name
+
+def previous_song():
+    global current_song
+    global current_duration
+
+    if not playlist:
+        return
+    if current_song > 0:
+        current_song -= 1
+
+        file = playlist[current_song]
+
+        pygame.mixer.music.load(file)
+        pygame.mixer.music.play()
+
+        current_duration = get_song_length(file)
+
+        progress_slider.set(0)
+
+        duration_label.configure(
+            text=f"0:00 / {format_duration(current_duration)}"
+        )
+        song_label.configure(text=file.split("/")[-1])  # Update the label with the previous song name
+
+def check_music_end():
+    if playlist and not pygame.mixer.music.get_busy():
+        if current_song < len(playlist) - 1:
+            next_song()
+
+    app.after(500, check_music_end)
+
+def get_song_length(file):
+    sound = pygame.mixer.Sound(file)
+    return sound.get_length()
+
+
+
+def update_progress():
+    if current_duration > 0:
+        position = pygame.mixer.music.get_pos() / 1000
+
+        progress = (position / current_duration) * 100
+
+        progress_slider.set(progress)
+
+        duration_label.configure(
+            text=f"{format_duration(position)} / {format_duration(current_duration)}"
+        )
+
+    app.after(500, update_progress)
 
 song_label = ctk.CTkLabel(
     app,
@@ -64,6 +157,20 @@ song_label = ctk.CTkLabel(
 )
 song_label.pack(pady=40)
 
+duration_label = ctk.CTkLabel(
+app,
+    text="0:00/0:00"
+)
+duration_label.pack(pady=5)
+
+progress_slider = ctk.CTkSlider(
+    app,
+    from_=0,
+    to=100,
+    width=400
+)
+progress_slider.set(0)
+progress_slider.pack(pady=10)
 playlist_frame = ctk.CTkFrame(
     app,
     width = 400,
@@ -115,5 +222,20 @@ volume_slider = ctk.CTkSlider(
 volume_slider.set(0.5)
 volume_slider.pack(pady=10)
 
+next_button = ctk.CTkButton(
+    app,
+    text = "⏭ Next" ,
+    command=next_song
+)
+next_button.pack(pady=10)
 
+previous_button = ctk.CTkButton(
+    app,
+    text = "⏮ Previous",
+    command=previous_song
+)
+previous_button.pack(pady=10)
+
+#check_music_end()
+update_progress()
 app.mainloop()
