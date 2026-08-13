@@ -5,10 +5,6 @@ from tkinter import filedialog
 
 pygame.mixer.init()
 
-#here we are creating a custom event for when the music ends
-MUSIC_END = pygame.USEREVENT + 1
-pygame.mixer.music.set_endevent(MUSIC_END)
-
 #here we are creating the main window for the music player
 app = ctk.CTk()
 app.title("Music Player")
@@ -17,6 +13,8 @@ app.geometry("500x400")
 playlist = []
 current_song = 0
 current_duration = 0
+user_seek = False
+seek_offset = 0  # where the current pygame play() call started from, in seconds
 
 #this function allows the user to select a music file from their computer
 def select_song():
@@ -65,14 +63,16 @@ def format_duration(seconds):
 def play_selected_song(file):
     global current_song
     global current_duration
+    global seek_offset
     current_song = playlist.index(file)
 
     pygame.mixer.music.load(file)
     pygame.mixer.music.play()
+    seek_offset = 0
 
     current_duration = get_song_length(file)
     duration_label.configure(
-        text=f"0:00 / {format_duration(duration)}"
+        text=f"0:00 / {format_duration(current_duration)}"
     )
 
     song_label.configure(text=file.split("/")[-1])  # Update the label with the selected song name
@@ -80,6 +80,7 @@ def play_selected_song(file):
 def next_song():
     global current_song
     global current_duration
+    global seek_offset
     if not playlist:
         return  # No songs in the playlist
     if current_song < len(playlist) - 1:
@@ -89,6 +90,7 @@ def next_song():
 
         pygame.mixer.music.load(file)
         pygame.mixer.music.play()
+        seek_offset = 0
 
         current_duration = get_song_length(file)
 
@@ -103,6 +105,7 @@ def next_song():
 def previous_song():
     global current_song
     global current_duration
+    global seek_offset
 
     if not playlist:
         return
@@ -113,6 +116,7 @@ def previous_song():
 
         pygame.mixer.music.load(file)
         pygame.mixer.music.play()
+        seek_offset = 0
 
         current_duration = get_song_length(file)
 
@@ -137,8 +141,8 @@ def get_song_length(file):
 
 
 def update_progress():
-    if current_duration > 0:
-        position = pygame.mixer.music.get_pos() / 1000
+    if current_duration > 0 and not user_seek:
+        position = seek_offset + (pygame.mixer.music.get_pos() / 1000)
 
         progress = (position / current_duration) * 100
 
@@ -147,8 +151,38 @@ def update_progress():
         duration_label.configure(
             text=f"{format_duration(position)} / {format_duration(current_duration)}"
         )
-
     app.after(500, update_progress)
+
+def seek_song(value):
+    # Called continuously while dragging the slider. Just update the time
+    # label to give live feedback -- the actual seek happens on release
+    # in stop_seeking(), otherwise we'd restart playback on every pixel
+    # of drag movement.
+    if current_duration > 0:
+        position = (float(value) / 100) * current_duration
+        duration_label.configure(
+            text=f"{format_duration(position)} / {format_duration(current_duration)}"
+        )
+
+
+def start_seeking(event):
+    global user_seek
+    user_seek = True
+
+
+def stop_seeking(event):
+    global user_seek
+    global seek_offset
+    user_seek = False
+
+    if current_duration > 0:
+        value = progress_slider.get()
+        position = (value / 100) * current_duration
+        pygame.mixer.music.play(start=position)
+        seek_offset = position
+
+
+
 
 song_label = ctk.CTkLabel(
     app,
@@ -167,10 +201,15 @@ progress_slider = ctk.CTkSlider(
     app,
     from_=0,
     to=100,
-    width=400
+    width=400,
+    command=seek_song
 )
 progress_slider.set(0)
 progress_slider.pack(pady=10)
+
+progress_slider.bind("<ButtonPress-1>", start_seeking)
+progress_slider.bind("<ButtonRelease-1>", stop_seeking)
+
 playlist_frame = ctk.CTkFrame(
     app,
     width = 400,
