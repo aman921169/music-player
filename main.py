@@ -1,6 +1,7 @@
 #here we are importing the required libraries
 import customtkinter as ctk
 import pygame
+import random
 from tkinter import filedialog
 
 pygame.mixer.init()
@@ -15,6 +16,7 @@ current_song = 0
 current_duration = 0
 user_seek = False
 seek_offset = 0  # where the current pygame play() call started from, in seconds
+shuffle_enabled = False
 
 #this function allows the user to select a music file from their computer
 def select_song():
@@ -81,27 +83,42 @@ def next_song():
     global current_song
     global current_duration
     global seek_offset
+
     if not playlist:
-        return  # No songs in the playlist
-    if current_song < len(playlist) - 1:
-        current_song += 1
+        return
 
-        file = playlist[current_song]
+    if shuffle_enabled:
+        if len(playlist) == 1:
+            return
 
-        pygame.mixer.music.load(file)
-        pygame.mixer.music.play()
-        seek_offset = 0
+        available_songs = list(range(len(playlist)))
+        available_songs.remove(current_song)
+        current_song = random.choice(available_songs)
 
-        current_duration = get_song_length(file)
+    else:
+        if current_song < len(playlist) - 1:
+            current_song += 1
+        else:
+            return
 
-        progress_slider.set(0)
+    file = playlist[current_song]
 
-        duration_label.configure(
-            text=f"0:00 / {format_duration(current_duration)}"
-        )
+    pygame.mixer.music.load(file)
+    pygame.mixer.music.play()
+    seek_offset = 0
 
-        song_label.configure(text=file.split("/")[-1])  # Update the label with the next song name
+    current_duration = get_song_length(file)
 
+    progress_slider.set(0)
+
+    duration_label.configure(
+        text=f"0:00 / {format_duration(current_duration)}"
+    )
+
+    song_label.configure(
+        text=file.split("/")[-1]
+    )
+    
 def previous_song():
     global current_song
     global current_duration
@@ -181,7 +198,15 @@ def stop_seeking(event):
         pygame.mixer.music.play(start=position)
         seek_offset = position
 
+def toggle_shuffle():
+    global shuffle_enabled
 
+    shuffle_enabled = not shuffle_enabled
+
+    if shuffle_enabled:
+        shuffle_button.configure(text="🔀 Shuffle: ON")
+    else:
+        shuffle_button.configure(text="🔀 Shuffle: OFF")
 
 
 song_label = ctk.CTkLabel(
@@ -274,6 +299,14 @@ previous_button = ctk.CTkButton(
     command=previous_song
 )
 previous_button.pack(pady=10)
+
+shuffle_button = ctk.CTkButton(
+    app,
+    text = "🔀 Shuffle: OFF",
+    command = toggle_shuffle
+)
+shuffle_button.pack(pady=10)
+
 
 #check_music_end()
 update_progress()
