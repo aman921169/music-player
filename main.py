@@ -16,29 +16,9 @@ current_song = 0
 current_duration = 0
 user_seek = False
 seek_offset = 0  # where the current pygame play() call started from, in seconds
-shuffle_enabled = False
-
-#this function allows the user to select a music file from their computer
-def select_song():
-    file = filedialog.askopenfilename(
-        filetypes=[("Audio files", "*.mp3 *.wav *.ogg")]
-        )
-    if file:
-        pygame.mixer.music.load(file)
-        song_label.configure(text=file.split("/")[-1])  # Display only the file name
-
-
-def play_song():
-    pygame.mixer.music.play()
-
-def pause_song():
-    pygame.mixer.music.pause()
-
-def resume_song():
-    pygame.mixer.music.unpause()
-
-def stop_song():
-    pygame.mixer.music.stop()
+shuffle_enabled = False 
+repeat_enabled = False
+is_playing = False
 
 def change_control(value):
     pygame.mixer.music.set_volume(float(value))
@@ -66,10 +46,14 @@ def play_selected_song(file):
     global current_song
     global current_duration
     global seek_offset
+    global is_playing
     current_song = playlist.index(file)
 
     pygame.mixer.music.load(file)
     pygame.mixer.music.play()
+    
+    is_playing = True
+    play_pause_button.configure(text="⏸ Pause")
     seek_offset = 0
 
     current_duration = get_song_length(file)
@@ -89,15 +73,17 @@ def next_song():
 
     if shuffle_enabled:
         if len(playlist) == 1:
-            return
-
-        available_songs = list(range(len(playlist)))
-        available_songs.remove(current_song)
-        current_song = random.choice(available_songs)
+            current_song = 0
+        else:
+            available_songs = list(range(len(playlist)))
+            available_songs.remove(current_song)
+            current_song = random.choice(available_songs)
 
     else:
         if current_song < len(playlist) - 1:
             current_song += 1
+        elif repeat_enabled:
+            current_song = 0
         else:
             return
 
@@ -105,6 +91,8 @@ def next_song():
 
     pygame.mixer.music.load(file)
     pygame.mixer.music.play()
+    is_playing = True
+    play_pause_button.configure(text="⏸ Pause")
     seek_offset = 0
 
     current_duration = get_song_length(file)
@@ -118,12 +106,12 @@ def next_song():
     song_label.configure(
         text=file.split("/")[-1]
     )
-    
+
 def previous_song():
     global current_song
     global current_duration
     global seek_offset
-
+    global is_playing
     if not playlist:
         return
     if current_song > 0:
@@ -133,6 +121,8 @@ def previous_song():
 
         pygame.mixer.music.load(file)
         pygame.mixer.music.play()
+        is_playing = True
+        play_pause_button.configure(text="⏸ Pause")
         seek_offset = 0
 
         current_duration = get_song_length(file)
@@ -145,9 +135,22 @@ def previous_song():
         song_label.configure(text=file.split("/")[-1])  # Update the label with the previous song name
 
 def check_music_end():
-    if playlist and not pygame.mixer.music.get_busy():
-        if current_song < len(playlist) - 1:
-            next_song()
+    if playlist and is_playing and not user_seek and not pygame.mixer.music.get_busy():
+        
+        if repeat_enabled:
+            file = playlist[current_song]
+            
+            pygame.mixer.music.load(file)
+            pygame.mixer.music.play()
+            
+            progress_slider.set(0)
+            
+            duration_label.configure(
+                text=f"0:00 / {format_duration(current_duration)}"
+            )
+        
+        elif current_song < len(playlist):
+             next_song()
 
     app.after(500, check_music_end)
 
@@ -208,7 +211,28 @@ def toggle_shuffle():
     else:
         shuffle_button.configure(text="🔀 Shuffle: OFF")
 
-
+def toggle_repeat():
+    global repeat_enabled
+    repeat_enabled = not repeat_enabled
+    if repeat_enabled:
+        repeat_button.configure(text="🔁 Repeat: ON")
+    else:
+        repeat_button.configure(text="🔁 Repeat: OFF")
+        
+def toggle_play_pause():
+    global is_playing
+    if not playlist:
+        return
+    if is_playing:
+        pygame.mixer.music.pause()
+        is_playing = False
+        play_pause_button.configure(text="▶ Play")
+    else:
+        pygame.mixer.music.unpause()
+        is_playing = True
+        play_pause_button.configure(text="⏸ Pause")
+        
+        
 song_label = ctk.CTkLabel(
     app,
     text="no song selected",
@@ -242,6 +266,12 @@ playlist_frame = ctk.CTkFrame(
     )
 playlist_frame.pack(pady=10)
 
+nav_frame = ctk.CTkFrame(app)
+nav_frame.pack(pady=10)
+
+secondary_frame = ctk.CTkFrame(app)
+secondary_frame.pack(pady=5)
+
 select_button = ctk.CTkButton(
     app,
     text="add Songs",
@@ -249,33 +279,12 @@ select_button = ctk.CTkButton(
 )
 select_button.pack(pady=10)
 
-play_button = ctk.CTkButton(
-    app,
+play_pause_button = ctk.CTkButton(
+    nav_frame,
     text="▶ Play",
-    command=play_song
+    command=toggle_play_pause
 )
-play_button.pack(pady=10)
-
-resume_button = ctk.CTkButton(
-    app,
-    text="⏯ Resume",
-    command=resume_song
-)
-resume_button.pack(pady=10)
-
-pause_button = ctk.CTkButton(
-    app,
-    text="⏸ Pause",
-    command=pause_song
-)
-pause_button.pack(pady=10)
-
-stop_button = ctk.CTkButton(
-    app,
-    text="⏹ Stop",
-    command=stop_song
-)
-stop_button.pack(pady=10)
+play_pause_button.pack(side = "left",padx=5)
 
 volume_slider = ctk.CTkSlider(
     app,
@@ -287,27 +296,32 @@ volume_slider.set(0.5)
 volume_slider.pack(pady=10)
 
 next_button = ctk.CTkButton(
-    app,
+    nav_frame,
     text = "⏭ Next" ,
     command=next_song
 )
-next_button.pack(pady=10)
+next_button.pack(side = "left",padx=5)
 
 previous_button = ctk.CTkButton(
-    app,
+    nav_frame,
     text = "⏮ Previous",
     command=previous_song
 )
-previous_button.pack(pady=10)
+previous_button.pack(side = "left",padx=5)
 
 shuffle_button = ctk.CTkButton(
-    app,
+    secondary_frame,
     text = "🔀 Shuffle: OFF",
     command = toggle_shuffle
 )
-shuffle_button.pack(pady=10)
+shuffle_button.pack(side = "left",padx=5)
 
-
-#check_music_end()
+repeat_button = ctk.CTkButton(
+    secondary_frame,
+    text="🔁 Repeat: OFF",
+    command=toggle_repeat
+)
+repeat_button.pack(side = "left",padx=5)
+check_music_end()
 update_progress()
 app.mainloop()

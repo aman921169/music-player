@@ -17,6 +17,8 @@ This project was built step by step as a learning project while practicing Pytho
 - Live playback progress bar
 - Seek through a song using the progress bar
 - Supports MP3, WAV, and OGG audio files
+- shuffle
+- repeat
 
 ## Technologies Used
 
@@ -86,8 +88,6 @@ This project helped me practice:
 ## Planned Improvements
 
 - Keyboard shortcuts
-- Shuffle mode
-- Repeat mode
 - Album artwork
 - Remember volume settings
 - Remove songs from the playlist
