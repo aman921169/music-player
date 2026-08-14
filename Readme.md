@@ -1,96 +1,46 @@
-# Music Player
+# 🎵 Music Player
 
-A simple desktop music player built with Python, CustomTkinter, and pygame.
+A desktop music player built with Python, CustomTkinter, and Pygame.
 
-This project was built step by step as a learning project while practicing Python, GUI development, audio playback, and event-driven programming.
+This project started as a simple Python music player and was gradually expanded with playlist management, playback controls, seeking, shuffle, repeat, album artwork, and a polished dark-themed interface.
 
-## Features
+## ✨ Features
 
-- Add multiple songs to a playlist
-- Play songs from the playlist
-- Pause and resume playback
-- Stop playback
-- Next and previous song controls
-- Volume control
-- Display the current song name
-- Display the current playback time and total duration
-- Live playback progress bar
-- Seek through a song using the progress bar
-- Supports MP3, WAV, and OGG audio files
-- shuffle
-- repeat
+- ▶️ Play / Pause
+- ⏮️ Previous track
+- ⏭️ Next track
+- 🔀 Shuffle
+- 🔁 Repeat
+- 🎚️ Volume control
+- ⏱️ Playback progress and duration
+- 🎯 Seek through songs using the progress bar
+- 🖼️ Embedded album artwork for supported MP3 files
+- 📋 Playlist management
+- ➕ Add multiple songs at once
+- ❌ Remove songs from the playlist
+- 🎵 Current track highlighting
+- 📜 Scrollable playlist
+- ▶️ Playing / Paused status indicator
+- 🚫 Prevents duplicate songs from being added to the playlist
+- 🌙 Dark-themed UI
+- 🖥️ Windows executable available
 
-## Technologies Used
+## 🛠️ Built With
 
-- Python
-- CustomTkinter
-- pygame
-- Tkinter file dialogs
-- Git and GitHub
+- **Python**
+- **CustomTkinter** — graphical user interface
+- **Pygame** — audio playback
+- **Pillow** — album artwork/image handling
+- **Mutagen** — MP3 metadata and album artwork
+- **Tkinter** — file selection dialogs
 
-## How It Works
+## 🎧 Supported Audio Formats
 
-- **CustomTkinter** creates the graphical interface.
-- **pygame.mixer.music** handles audio playback.
-- A Python list stores the playlist.
-- Button and slider callbacks respond to user actions.
-- `app.after()` updates the playback progress periodically.
+The file picker currently supports:
 
-## Installation
+- MP3
+- WAV
+- OGG
+- FLAC
 
-Install the required packages:
-
-```bash
-pip install customtkinter pygame
-```
-
-Run the application:
-
-```bash
-python main.py
-```
-
-## Usage
-
-1. Click **Add Songs**.
-2. Select one or more audio files.
-3. Click a song from the playlist to start playing it.
-4. Use the playback controls to pause, resume, stop, or change songs.
-5. Use the volume slider to control the volume.
-6. Drag the progress bar to seek through the current song.
-
-## Project Structure
-
-```text
-music-player/
-│
-├── main.py
-├── README.md
-└── ...
-```
-
-## Learning Goals
-
-This project helped me practice:
-
-- Python functions
-- Variables and global state
-- Lists and indexes
-- GUI widgets
-- Button callbacks
-- Slider callbacks
-- Mouse events
-- Audio playback with pygame
-- Updating GUI elements with `after()`
-- File dialogs
-- Git and GitHub
-
-## Planned Improvements
-
-- Keyboard shortcuts
-- Album artwork
-- Remember volume settings
-- Remove songs from the playlist
-- Save and load playlists
-- Improved UI
-- FLAC support
+> Playback support ultimately depends on the audio formats supported by the Pygame mixer/backend on the system.
